@@ -81,15 +81,6 @@ def calculate_area_in_hectares(polygon: Polygon):
             detail=f"Error calculating area in hectares: {str(e)}. Ensure the polygon is valid."
         )
 
-def calculate_centroid(polygon: Polygon):
-    """Calculate the centroid of the polygon."""
-    centroid = polygon.centroid
-    return centroid.y, centroid.x  # Return as (latitude, longitude)
-
-def get_h3_index(lat: float, lng: float, resolution: int = 1):
-    """Get the H3 index for the centroid at the given resolution."""
-    return h3.geo_to_h3(lat, lng, resolution)
-
 def get_country_from_centroid(lat: float, lng: float):
     """Get the country for the centroid using reverse geocoding."""
     location = reverse_geocode.search([(lat, lng)])
@@ -155,7 +146,7 @@ async def encrypt_polygons(
 ):
     try:
         # Ensure the winding order is correct
-        corrected_feature_collection = ensure_correct_winding_order(feature_collection.dict())
+        corrected_feature_collection = ensure_correct_winding_order(feature_collection.model_dump())
 
         encrypted_feature_collection = {
             "type": "EncryptedFeatureCollection",
@@ -173,13 +164,13 @@ async def encrypt_polygons(
             area_hectares = calculate_area_in_hectares(poly)
             
             # Step 2: Calculate the centroid
-            centroid_lat, centroid_lng = calculate_centroid(poly)
+            centroid = poly.centroid
             
             # Step 3: Find the H3 index at resolution 1
-            h3_index = get_h3_index(centroid_lat, centroid_lng)
+            h3_index = h3.geo_to_h3(centroid.y, centroid.x, 1)
             
             # Step 4: Get the country for the centroid
-            country = get_country_from_centroid(centroid_lat, centroid_lng)
+            country = get_country_from_centroid(centroid.y, centroid.x)
             
             # Step 5: Shrink the polygon by 10 meters
             shrunk_poly = shrink_polygon(poly, distance=10)
@@ -196,7 +187,6 @@ async def encrypt_polygons(
                 "id": "",
                 "properties": {
                     "area_hectares": area_hectares,
-                    "centroid": [centroid_lat, centroid_lng],
                     "h3_index": h3_index,
                     "country": country
                 },
