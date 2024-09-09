@@ -188,7 +188,9 @@ async def encrypt_polygons(
                 "properties": {
                     "area_hectares": area_hectares,
                     "h3_index": h3_index,
-                    "country": country
+                    "country": country,
+                    "start_at": feature['properties']['start_at'],
+                    "end_at": feature['properties']['end_at'],
                 },
                 "geometry": {
                     "coordinates": [
